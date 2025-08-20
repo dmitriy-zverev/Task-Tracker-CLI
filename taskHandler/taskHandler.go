@@ -168,6 +168,34 @@ func HandleOperation(tasks []Task) (newTasks []Task, err error) {
 		if err != nil {
 			return tasks, err
 		}
+	case "mark-in-progress":
+		if param1 == "" {
+			log.Fatal("error: you did not specify the ID of the task")
+		}
+
+		taskId, _ := strconv.Atoi(param1)
+		if taskId >= len(tasks) || taskId < 0 {
+			log.Fatal("error: invalid ID of the task")
+		}
+
+		tasks, err = handleMarkTaskInProgress(tasks, taskId, DATA_FILENAME)
+		if err != nil {
+			return tasks, err
+		}
+	case "mark-done":
+		if param1 == "" {
+			log.Fatal("error: you did not specify the ID of the task")
+		}
+
+		taskId, _ := strconv.Atoi(param1)
+		if taskId >= len(tasks) || taskId < 0 {
+			log.Fatal("error: invalid ID of the task")
+		}
+
+		tasks, err = handleMarkTaskDone(tasks, taskId, DATA_FILENAME)
+		if err != nil {
+			return tasks, err
+		}
 	default:
 		log.Fatal("Usage: task-tracker-cli <operation> [parameter 1] [parameter 2]")
 	}
@@ -209,20 +237,51 @@ func handleUpdateTask(tasks []Task, taskId int, newDesc, dataFileName string) (n
 		return tasks, fmt.Errorf("error: could not write to file: %w", err)
 	}
 
-	fmt.Printf("Successfully updated task (id: %d)", taskId)
+	fmt.Printf("Successfully updated task (id: %d)\n", taskId)
 	return tasks, nil
 }
 
-func handleDeleteTask(tasks []Task, taskId int, dataFileName string) (newtasks []Task, err error) {
+func handleDeleteTask(tasks []Task, taskId int, dataFileName string) (newTasks []Task, err error) {
 	// Change task property isDeleted to true
 	tasks[taskId].isDeleted = true
 
+	// Rewriting the whole file
 	err = updateDataFile(tasks, dataFileName)
 	if err != nil {
 		tasks[taskId].isDeleted = false
 		return tasks, fmt.Errorf("error: could not write to file: %w", err)
 	}
 
-	fmt.Printf("Successfully deleted task (id: %d)", taskId)
+	fmt.Printf("Successfully deleted task (id: %d)\n", taskId)
+	return tasks, nil
+}
+
+func handleMarkTaskInProgress(tasks []Task, taskId int, dataFileName string) (newTasks []Task, err error) {
+	// Change task property isDeleted to true
+	tasks[taskId].status = IN_PROGRESS
+
+	// Rewriting the whole file
+	err = updateDataFile(tasks, dataFileName)
+	if err != nil {
+		tasks[taskId].isDeleted = false
+		return tasks, fmt.Errorf("error: could not write to file: %w", err)
+	}
+
+	fmt.Printf("Marked task (id: %d) as in progress\n", taskId)
+	return tasks, nil
+}
+
+func handleMarkTaskDone(tasks []Task, taskId int, dataFileName string) (newTasks []Task, err error) {
+	// Change task property isDeleted to true
+	tasks[taskId].status = DONE
+
+	// Rewriting the whole file
+	err = updateDataFile(tasks, dataFileName)
+	if err != nil {
+		tasks[taskId].isDeleted = false
+		return tasks, fmt.Errorf("error: could not write to file: %w", err)
+	}
+
+	fmt.Printf("Marked task (id: %d) as done\n", taskId)
 	return tasks, nil
 }
