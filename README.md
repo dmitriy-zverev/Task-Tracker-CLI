@@ -13,8 +13,8 @@ The application should run from the command line, accept user actions and inputs
 
 We need to follow this principles:
 - [ ] Use positional arguments in command line to accept user inputs.
-- [ ] Use a JSON file to store the tasks in the current directory.
-- [ ] The JSON file should be created if it does not exist.
+- [ ] Use a data file to store the tasks in the current directory.
+- [ ] The data file should be created if it does not exist.
 - [ ] Use the native file system module of your programming language to interact with the JSON file.
 - [ ] Do not use any external libraries or frameworks to build this project.
 - [ ] Ensure to handle errors and edge cases gracefully.
@@ -53,5 +53,4 @@ Each task should have the following properties:
 * createdAt: The date and time when the task was created
 * updatedAt: The date and time when the task was last updated
 
-We have to make sure to add these properties to the JSON file when adding a new task and update them when updating a task.
-
+We have to make sure to add these properties to the data file when adding a new task and update them when updating a task.
