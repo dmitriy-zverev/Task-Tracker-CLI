@@ -1,15 +1,12 @@
 package taskHandler
 
 const (
-	ADD = iota
-	UPDATE
-	DELETE
-	MARK_IN_PROGRESS
-	MARK_DONE
-	LIST_ALL
-	LIST_DONE
-	LIST_TODO
-	LIST_IN_PROGRESS
+	ADD              = "add"
+	UPDATE           = "update"
+	DELETE           = "delete"
+	MARK_IN_PROGRESS = "mark-in-progress"
+	MARK_DONE        = "mark-done"
+	LIST             = "list"
 )
 
 const (

@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Task struct {
@@ -13,6 +14,8 @@ type Task struct {
 	status      int
 	isDeleted   bool
 	description string
+	createdAt   time.Time
+	updatedAt   time.Time
 }
 
 func LoadTasks() (tasks []Task, err error) {
@@ -37,19 +40,23 @@ func LoadTasks() (tasks []Task, err error) {
 	for _, dataLine := range parsedData {
 		splittedTask := strings.Split(dataLine, DATA_FILE_SEPARATOR)
 
-		if len(splittedTask) < 4 {
+		if len(splittedTask) < 6 {
 			continue
 		}
 
 		taskId, _ := strconv.Atoi(splittedTask[0])
 		taskStatus, _ := strconv.Atoi(splittedTask[1])
 		taskIsDeleted, _ := strconv.ParseBool(splittedTask[2])
+		taskCreatedAt, _ := time.Parse("2006-01-02 15:04:05.999999 -0700 MST", splittedTask[4])
+		taskUpdatedAt, _ := time.Parse("2006-01-02 15:04:05.999999 -0700 MST", splittedTask[5])
 
 		tasks = append(tasks, Task{
 			id:          taskId,
 			status:      taskStatus,
 			isDeleted:   taskIsDeleted,
 			description: splittedTask[3],
+			createdAt:   taskCreatedAt,
+			updatedAt:   taskUpdatedAt,
 		})
 	}
 
@@ -58,7 +65,7 @@ func LoadTasks() (tasks []Task, err error) {
 
 func createDataFileString(task Task) (dataFileString string) {
 	return fmt.Sprintf(
-		"%d%s%d%s%v%s%s\n",
+		"%d%s%d%s%v%s%s%s%v%s%v\n",
 		task.id,
 		DATA_FILE_SEPARATOR,
 		task.status,
@@ -66,6 +73,10 @@ func createDataFileString(task Task) (dataFileString string) {
 		task.isDeleted,
 		DATA_FILE_SEPARATOR,
 		task.description,
+		DATA_FILE_SEPARATOR,
+		task.createdAt,
+		DATA_FILE_SEPARATOR,
+		task.updatedAt,
 	)
 }
 
@@ -128,7 +139,7 @@ func HandleOperation(tasks []Task) (newTasks []Task, err error) {
 	operation, param1, param2 := parseArgv()
 
 	switch strings.ToLower(operation) {
-	case "add":
+	case ADD:
 		if param1 == "" {
 			log.Fatal("error: cannot add empty task")
 		}
@@ -137,7 +148,7 @@ func HandleOperation(tasks []Task) (newTasks []Task, err error) {
 		if err != nil {
 			return tasks, err
 		}
-	case "update":
+	case UPDATE:
 		if param1 == "" {
 			log.Fatal("error: you did not specify the ID of the task")
 		}
@@ -154,7 +165,7 @@ func HandleOperation(tasks []Task) (newTasks []Task, err error) {
 		if err != nil {
 			return tasks, err
 		}
-	case "delete":
+	case DELETE:
 		if param1 == "" {
 			log.Fatal("error: you did not specify the ID of the task")
 		}
@@ -168,7 +179,7 @@ func HandleOperation(tasks []Task) (newTasks []Task, err error) {
 		if err != nil {
 			return tasks, err
 		}
-	case "mark-in-progress":
+	case MARK_IN_PROGRESS:
 		if param1 == "" {
 			log.Fatal("error: you did not specify the ID of the task")
 		}
@@ -182,7 +193,7 @@ func HandleOperation(tasks []Task) (newTasks []Task, err error) {
 		if err != nil {
 			return tasks, err
 		}
-	case "mark-done":
+	case MARK_DONE:
 		if param1 == "" {
 			log.Fatal("error: you did not specify the ID of the task")
 		}
@@ -196,6 +207,39 @@ func HandleOperation(tasks []Task) (newTasks []Task, err error) {
 		if err != nil {
 			return tasks, err
 		}
+	case LIST:
+		// Print all tasks
+		if param1 == "" {
+			handleListAll(tasks)
+			return tasks, nil
+		}
+
+		status := -1
+		switch strings.ToLower(param1) {
+		case "todo":
+			status = TODO
+		case "done":
+			status = DONE
+		case "in-progress":
+			status = IN_PROGRESS
+		default:
+			log.Fatal("error: unknown type of tasks")
+		}
+
+		// Print only todo tasks
+		if status == TODO {
+			handleListTodo(tasks)
+		}
+
+		// Print only done tasks
+		if status == DONE {
+			handleListDone(tasks)
+		}
+
+		// Print only in progress tasks
+		if status == IN_PROGRESS {
+			handleListInProgress(tasks)
+		}
 	default:
 		log.Fatal("Usage: task-tracker-cli <operation> [parameter 1] [parameter 2]")
 	}
@@ -205,7 +249,13 @@ func HandleOperation(tasks []Task) (newTasks []Task, err error) {
 
 func handleAddTask(tasks []Task, taskDescription, dataFileName string) (newTasks []Task, err error) {
 	// Creating new task and adding it to tasks slice
-	newTask := Task{id: len(tasks), status: TODO, description: taskDescription}
+	newTask := Task{
+		id:          len(tasks),
+		status:      TODO,
+		description: taskDescription,
+		createdAt:   time.Now().UTC(),
+		updatedAt:   time.Now().UTC(),
+	}
 	tasks = append(tasks, newTask)
 
 	// Writing new task to data file
@@ -222,18 +272,23 @@ func handleAddTask(tasks []Task, taskDescription, dataFileName string) (newTasks
 func handleUpdateTask(tasks []Task, taskId int, newDesc, dataFileName string) (newTasks []Task, err error) {
 	// Updating task with new description, saving old description in case of errors
 	oldDescription := tasks[taskId].description
-	newTask := Task{
-		id:          taskId,
-		status:      tasks[taskId].status,
-		isDeleted:   tasks[taskId].isDeleted,
-		description: newDesc,
-	}
-	tasks[taskId] = newTask
+	oldUpdatedAt := tasks[taskId].updatedAt
+	// newTask := Task{
+	// 	id:          taskId,
+	// 	status:      tasks[taskId].status,
+	// 	isDeleted:   tasks[taskId].isDeleted,
+	// 	description: newDesc,
+	// 	createdAt:   tasks[taskId].createdAt,
+	// 	updatedAt:   time.Now(),
+	// }
+	tasks[taskId].description = newDesc
+	tasks[taskId].updatedAt = time.Now().UTC()
 
 	// Rewriting the whole file
 	err = updateDataFile(tasks, dataFileName)
 	if err != nil {
 		tasks[taskId].description = oldDescription
+		tasks[taskId].updatedAt = oldUpdatedAt
 		return tasks, fmt.Errorf("error: could not write to file: %w", err)
 	}
 
@@ -244,6 +299,7 @@ func handleUpdateTask(tasks []Task, taskId int, newDesc, dataFileName string) (n
 func handleDeleteTask(tasks []Task, taskId int, dataFileName string) (newTasks []Task, err error) {
 	// Change task property isDeleted to true
 	tasks[taskId].isDeleted = true
+	tasks[taskId].updatedAt = time.Now().UTC()
 
 	// Rewriting the whole file
 	err = updateDataFile(tasks, dataFileName)
@@ -259,6 +315,7 @@ func handleDeleteTask(tasks []Task, taskId int, dataFileName string) (newTasks [
 func handleMarkTaskInProgress(tasks []Task, taskId int, dataFileName string) (newTasks []Task, err error) {
 	// Change task property isDeleted to true
 	tasks[taskId].status = IN_PROGRESS
+	tasks[taskId].updatedAt = time.Now().UTC()
 
 	// Rewriting the whole file
 	err = updateDataFile(tasks, dataFileName)
@@ -273,15 +330,92 @@ func handleMarkTaskInProgress(tasks []Task, taskId int, dataFileName string) (ne
 
 func handleMarkTaskDone(tasks []Task, taskId int, dataFileName string) (newTasks []Task, err error) {
 	// Change task property isDeleted to true
+	oldStatus := tasks[taskId].status
+	oldUpdatedAt := tasks[taskId].updatedAt
 	tasks[taskId].status = DONE
+	tasks[taskId].updatedAt = time.Now().UTC()
 
 	// Rewriting the whole file
 	err = updateDataFile(tasks, dataFileName)
 	if err != nil {
-		tasks[taskId].isDeleted = false
+		tasks[taskId].status = oldStatus
+		tasks[taskId].updatedAt = oldUpdatedAt
 		return tasks, fmt.Errorf("error: could not write to file: %w", err)
 	}
 
 	fmt.Printf("Marked task (id: %d) as done\n", taskId)
 	return tasks, nil
+}
+
+func handleListAll(tasks []Task) {
+	fmt.Println("\n==========TODO LIST==========\n")
+	fmt.Println("——————————All Tasks——————————\n")
+
+	for _, task := range tasks {
+		if task.status != DONE {
+			fmt.Printf("[ ]")
+		} else {
+			fmt.Printf("[X]")
+		}
+
+		fmt.Printf(" (id: %d)", task.id)
+		fmt.Printf(" %s", task.description)
+
+		if task.isDeleted {
+			fmt.Printf(" (deleted)")
+		}
+
+		fmt.Printf("\n")
+	}
+}
+
+func handleListTodo(tasks []Task) {
+	fmt.Println("\n==========TODO LIST==========\n")
+	fmt.Println("—————————Todo Tasks—————————\n")
+
+	for _, task := range tasks {
+		if task.status == TODO {
+			fmt.Printf("[ ] (id: %d) %s", task.id, task.description)
+
+			if task.isDeleted {
+				fmt.Printf(" (deleted)")
+			}
+
+			fmt.Printf("\n")
+		}
+	}
+}
+
+func handleListDone(tasks []Task) {
+	fmt.Println("\n==========TODO LIST==========\n")
+	fmt.Println("—————————Done Tasks——————--—\n")
+
+	for _, task := range tasks {
+		if task.status == DONE {
+			fmt.Printf("[X] (id: %d) %s", task.id, task.description)
+
+			if task.isDeleted {
+				fmt.Printf(" (deleted)")
+			}
+
+			fmt.Printf("\n")
+		}
+	}
+}
+
+func handleListInProgress(tasks []Task) {
+	fmt.Println("\n==========TODO LIST==========\n")
+	fmt.Println("——————In Progress Tasks——————\n")
+
+	for _, task := range tasks {
+		if task.status == IN_PROGRESS {
+			fmt.Printf("[ ] (id: %d) %s", task.id, task.description)
+
+			if task.isDeleted {
+				fmt.Printf(" (deleted)")
+			}
+
+			fmt.Printf("\n")
+		}
+	}
 }
