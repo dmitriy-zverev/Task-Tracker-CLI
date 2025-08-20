@@ -10,7 +10,6 @@ The application should run from the command line, accept user actions and inputs
 - [ ] List all tasks that are done
 - [ ] List all tasks that are not done
 - [ ] List all tasks that are in progress
-- [ ] Here are some constraints to guide the implementation:
 
 We need to follow this principles:
 - [ ] Use positional arguments in command line to accept user inputs.
