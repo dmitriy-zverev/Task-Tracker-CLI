@@ -54,3 +54,5 @@ Each task should have the following properties:
 * updatedAt: The date and time when the task was last updated
 
 We have to make sure to add these properties to the data file when adding a new task and update them when updating a task.
+
+Project inspired by https://roadmap.sh/projects/task-tracker
