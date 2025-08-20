@@ -56,9 +56,8 @@ func LoadTasks() (tasks []Task, err error) {
 	return tasks, nil
 }
 
-func appendToDataFile(task Task, dataFileName string) (err error) {
-	// Creating a string to put in the data file
-	fileDataString := fmt.Sprintf(
+func createDataFileString(task Task) (dataFileString string) {
+	return fmt.Sprintf(
 		"%d%s%d%s%v%s%s\n",
 		task.id,
 		DATA_FILE_SEPARATOR,
@@ -68,6 +67,11 @@ func appendToDataFile(task Task, dataFileName string) (err error) {
 		DATA_FILE_SEPARATOR,
 		task.description,
 	)
+}
+
+func appendToDataFile(task Task, dataFileName string) (err error) {
+	// Creating a string to put in the data file
+	fileDataString := createDataFileString(task)
 
 	// Opening file
 	file, err := os.OpenFile(dataFileName, os.O_RDWR|os.O_APPEND, 0644)
@@ -82,6 +86,23 @@ func appendToDataFile(task Task, dataFileName string) (err error) {
 
 	// Successfully written, closing the file
 	file.Close()
+	return nil
+}
+
+func updateDataFile(tasks []Task, dataFileName string) (err error) {
+	// Creating file content from scratch
+	fileContent := ""
+
+	for _, task := range tasks {
+		fileContent += createDataFileString(task)
+	}
+
+	// Overwriting the file
+	data := []byte(fileContent)
+	if err = os.WriteFile(dataFileName, data, 0644); err != nil {
+		return fmt.Errorf("error: could not overwrite the data file: %w", err)
+	}
+
 	return nil
 }
 
@@ -104,7 +125,7 @@ func parseArgv() (operation string, param1 string, param2 string) {
 }
 
 func HandleOperation(tasks []Task) (newTasks []Task, err error) {
-	operation, param1, _ := parseArgv()
+	operation, param1, param2 := parseArgv()
 
 	switch operation {
 	case "add":
@@ -113,6 +134,23 @@ func HandleOperation(tasks []Task) (newTasks []Task, err error) {
 		}
 
 		tasks, err = handleAddTask(tasks, param1, DATA_FILENAME)
+		if err != nil {
+			return tasks, err
+		}
+	case "update":
+		if param1 == "" {
+			log.Fatal("error: you did not specify the ID of the task")
+		}
+		if param2 == "" {
+			log.Fatal("error: cannot update task with empty description")
+		}
+
+		taskId, _ := strconv.Atoi(param1)
+		if taskId >= len(tasks) || taskId < 0 {
+			log.Fatal("error: invalid ID of the task")
+		}
+
+		tasks, err = handleUpdateTask(tasks, taskId, param2, DATA_FILENAME)
 		if err != nil {
 			return tasks, err
 		}
@@ -136,5 +174,27 @@ func handleAddTask(tasks []Task, taskDescription, dataFileName string) (newTasks
 	}
 
 	fmt.Printf("Task added successfully (id: %d)\n", newTask.id)
+	return tasks, nil
+}
+
+func handleUpdateTask(tasks []Task, taskId int, newDesc, dataFileName string) (newTasks []Task, err error) {
+	// Updating task with new description, saving old description in case of errors
+	oldDescription := tasks[taskId].description
+	newTask := Task{
+		id:          taskId,
+		status:      tasks[taskId].status,
+		isDeleted:   tasks[taskId].isDeleted,
+		description: newDesc,
+	}
+	tasks[taskId] = newTask
+
+	// Rewriting the whole file
+	err = updateDataFile(tasks, dataFileName)
+	if err != nil {
+		tasks[taskId].description = oldDescription
+		return tasks, fmt.Errorf("error: could not write to file: %w", err)
+	}
+
+	fmt.Printf("Successfully updated task (id: %d)", taskId)
 	return tasks, nil
 }
