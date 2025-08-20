@@ -127,7 +127,7 @@ func parseArgv() (operation string, param1 string, param2 string) {
 func HandleOperation(tasks []Task) (newTasks []Task, err error) {
 	operation, param1, param2 := parseArgv()
 
-	switch operation {
+	switch strings.ToLower(operation) {
 	case "add":
 		if param1 == "" {
 			log.Fatal("error: cannot add empty task")
@@ -151,6 +151,20 @@ func HandleOperation(tasks []Task) (newTasks []Task, err error) {
 		}
 
 		tasks, err = handleUpdateTask(tasks, taskId, param2, DATA_FILENAME)
+		if err != nil {
+			return tasks, err
+		}
+	case "delete":
+		if param1 == "" {
+			log.Fatal("error: you did not specify the ID of the task")
+		}
+
+		taskId, _ := strconv.Atoi(param1)
+		if taskId >= len(tasks) || taskId < 0 {
+			log.Fatal("error: invalid ID of the task")
+		}
+
+		tasks, err = handleDeleteTask(tasks, taskId, DATA_FILENAME)
 		if err != nil {
 			return tasks, err
 		}
@@ -196,5 +210,19 @@ func handleUpdateTask(tasks []Task, taskId int, newDesc, dataFileName string) (n
 	}
 
 	fmt.Printf("Successfully updated task (id: %d)", taskId)
+	return tasks, nil
+}
+
+func handleDeleteTask(tasks []Task, taskId int, dataFileName string) (newtasks []Task, err error) {
+	// Change task property isDeleted to true
+	tasks[taskId].isDeleted = true
+
+	err = updateDataFile(tasks, dataFileName)
+	if err != nil {
+		tasks[taskId].isDeleted = false
+		return tasks, fmt.Errorf("error: could not write to file: %w", err)
+	}
+
+	fmt.Printf("Successfully deleted task (id: %d)", taskId)
 	return tasks, nil
 }

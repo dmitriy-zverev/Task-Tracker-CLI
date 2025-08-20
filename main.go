@@ -15,8 +15,8 @@ func main() {
 	}
 
 	// Handling the operation passed from the terminal
-	tasks, err = taskHandler.HandleOperation(tasks)
+	_, err = taskHandler.HandleOperation(tasks)
 	if err != nil {
-		fmt.Printf("error: %w", err)
+		fmt.Printf("error: %v", err)
 	}
 }
