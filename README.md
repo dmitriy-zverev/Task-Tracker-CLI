@@ -6,10 +6,10 @@ The application should run from the command line, accept user actions and inputs
 
 - [x] Add, Update, and Delete tasks
 - [x] Mark a task as in progress or done
-- [ ] List all tasks
-- [ ] List all tasks that are done
-- [ ] List all tasks that are not done
-- [ ] List all tasks that are in progress
+- [x] List all tasks
+- [x] List all tasks that are done
+- [x] List all tasks that are not done
+- [x] List all tasks that are in progress
 
 We need to follow this principles:
 - [x] Use positional arguments in command line to accept user inputs.

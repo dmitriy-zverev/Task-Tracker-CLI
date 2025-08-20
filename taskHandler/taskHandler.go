@@ -10,12 +10,12 @@ import (
 )
 
 type Task struct {
+	createdAt   time.Time
+	updatedAt   time.Time
 	id          int
 	status      int
 	isDeleted   bool
 	description string
-	createdAt   time.Time
-	updatedAt   time.Time
 }
 
 func LoadTasks() (tasks []Task, err error) {
@@ -270,17 +270,10 @@ func handleAddTask(tasks []Task, taskDescription, dataFileName string) (newTasks
 }
 
 func handleUpdateTask(tasks []Task, taskId int, newDesc, dataFileName string) (newTasks []Task, err error) {
-	// Updating task with new description, saving old description in case of errors
+	// Updating task with new description, saving old description and updatedAt in case of errors
 	oldDescription := tasks[taskId].description
 	oldUpdatedAt := tasks[taskId].updatedAt
-	// newTask := Task{
-	// 	id:          taskId,
-	// 	status:      tasks[taskId].status,
-	// 	isDeleted:   tasks[taskId].isDeleted,
-	// 	description: newDesc,
-	// 	createdAt:   tasks[taskId].createdAt,
-	// 	updatedAt:   time.Now(),
-	// }
+
 	tasks[taskId].description = newDesc
 	tasks[taskId].updatedAt = time.Now().UTC()
 
@@ -348,8 +341,8 @@ func handleMarkTaskDone(tasks []Task, taskId int, dataFileName string) (newTasks
 }
 
 func handleListAll(tasks []Task) {
-	fmt.Println("\n==========TODO LIST==========\n")
-	fmt.Println("——————————All Tasks——————————\n")
+	fmt.Printf("\n==========TODO LIST==========\n\n")
+	fmt.Printf("——————————All Tasks——————————\n\n")
 
 	for _, task := range tasks {
 		if task.status != DONE {
@@ -370,8 +363,8 @@ func handleListAll(tasks []Task) {
 }
 
 func handleListTodo(tasks []Task) {
-	fmt.Println("\n==========TODO LIST==========\n")
-	fmt.Println("—————————Todo Tasks—————————\n")
+	fmt.Printf("\n==========TODO LIST==========\n\n")
+	fmt.Printf("—————————Todo Tasks—————————\n\n")
 
 	for _, task := range tasks {
 		if task.status == TODO {
@@ -387,8 +380,8 @@ func handleListTodo(tasks []Task) {
 }
 
 func handleListDone(tasks []Task) {
-	fmt.Println("\n==========TODO LIST==========\n")
-	fmt.Println("—————————Done Tasks——————--—\n")
+	fmt.Printf("\n==========TODO LIST==========\n\n")
+	fmt.Printf("—————————Done Tasks——————--—\n\n")
 
 	for _, task := range tasks {
 		if task.status == DONE {
@@ -404,8 +397,8 @@ func handleListDone(tasks []Task) {
 }
 
 func handleListInProgress(tasks []Task) {
-	fmt.Println("\n==========TODO LIST==========\n")
-	fmt.Println("——————In Progress Tasks——————\n")
+	fmt.Printf("\n==========TODO LIST==========\n\n")
+	fmt.Printf("——————In Progress Tasks——————\n\n")
 
 	for _, task := range tasks {
 		if task.status == IN_PROGRESS {
