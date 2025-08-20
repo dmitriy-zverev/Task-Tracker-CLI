@@ -5,19 +5,19 @@ Task tracker is a project used to track and manage your tasks. I will build it t
 The application should run from the command line, accept user actions and inputs as arguments, and store the tasks in a JSON file. The user should be able to:
 
 - [x] Add, Update, and Delete tasks
-- [ ] Mark a task as in progress or done
+- [x] Mark a task as in progress or done
 - [ ] List all tasks
 - [ ] List all tasks that are done
 - [ ] List all tasks that are not done
 - [ ] List all tasks that are in progress
 
 We need to follow this principles:
-- [ ] Use positional arguments in command line to accept user inputs.
-- [ ] Use a data file to store the tasks in the current directory.
-- [ ] The data file should be created if it does not exist.
-- [ ] Use the native file system module of your programming language to interact with the JSON file.
-- [ ] Do not use any external libraries or frameworks to build this project.
-- [ ] Ensure to handle errors and edge cases gracefully.
+- [x] Use positional arguments in command line to accept user inputs.
+- [x] Use a data file to store the tasks in the current directory.
+- [x] The data file should be created if it does not exist.
+- [x] Use the native file system module of your programming language to interact with the JSON file.
+- [x] Do not use any external libraries or frameworks to build this project.
+- [x] Ensure to handle errors and edge cases gracefully.
 
 ## Example
 The list of commands and their usage is given below:
